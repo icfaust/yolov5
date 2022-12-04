@@ -25,19 +25,21 @@ class Albumentations:
         self.transform = None
         prefix = colorstr('albumentations: ')
         try:
-            import albumentations as A
-            check_version(A.__version__, '1.0.3', hard=True)  # version requirement
+            import albumentations as alb
+            check_version(alb.__version__, '1.3.0', hard=True)  # version requirement
 
             T = [
-                A.RandomResizedCrop(height=size, width=size, scale=(0.8, 1.0), ratio=(0.9, 1.11), p=0.0),
-                A.Blur(p=0.01),
-                A.MedianBlur(p=0.01),
-                A.ToGray(p=0.01),
-                A.CLAHE(p=0.01),
-                A.RandomBrightnessContrast(p=0.0),
-                A.RandomGamma(p=0.0),
-                A.ImageCompression(quality_lower=75, p=0.0)]  # transforms
-            self.transform = A.Compose(T, bbox_params=A.BboxParams(format='yolo', label_fields=['class_labels']))
+                 alb.MotionBlur(blur_limit=3, p=.5),
+                 alb.ISONoise(), #default
+                 alb.GaussNoise(), #default
+                 alb.RGBShift(), #default
+                 alb.ColorJitter(hue=.1), #default. Not doing sun flare for the moment
+                 alb.Affine(scale=.8, rotate=[-5,5], shear=[-30,30], keep_ratio=True),
+                 #alb.GridDistortion(), #default
+                 alb.OpticalDistortion(), #default
+                 alb.PadIfNeeded(min_height=1280, border_mode=cv2.BORDER_CONSTANT, value=0),
+                 alb.RandomCrop(height=1280, width=1280)]  # transforms
+            self.transform = alb.Compose(T, bbox_params=alb.BboxParams(format='yolo', label_fields=['class_labels']))
 
             LOGGER.info(prefix + ', '.join(f'{x}'.replace('always_apply=False, ', '') for x in T if x.p))
         except ImportError:  # package not installed, skip
@@ -45,10 +47,9 @@ class Albumentations:
         except Exception as e:
             LOGGER.info(f'{prefix}{e}')
 
-    def __call__(self, im, labels, p=1.0):
-        if self.transform and random.random() < p:
-            new = self.transform(image=im, bboxes=labels[:, 1:], class_labels=labels[:, 0])  # transformed
-            im, labels = new['image'], np.array([[c, *b] for c, b in zip(new['class_labels'], new['bboxes'])])
+    def __call__(self, im, labels):
+        new = self.transform(image=im, bboxes=labels[:, 1:], class_labels=labels[:, 0])  # transformed
+        im, labels = new['image'], np.array([[c, *b] for c, b in zip(new['class_labels'], new['bboxes'])])
         return im, labels
 
 
