@@ -1,0 +1,22 @@
+# YOLOv5 🚀 by Ultralytics, GPL-3.0 license
+# SODA10M dataset https://soda-2d.github.io/ (20000 labeled images) Huawei Technologies 
+# Example usage: python train.py --data SODA10M.yaml
+# parent
+# ├── yolov5
+# └── SSLAD-2D
+#     └──  labeled ←
+
+
+# Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..]
+path: ../SSLAD-2D  # dataset root dir
+train: # train images (relative to 'path') 15000 images
+  - labeled/train
+  - labeled/test
+val: labeled/val  # val images (relative to 'path') 5000 images
+test:  # test images (optional)
+
+# Classes
+names:
+  0: i
+  1: p
+  2: w
